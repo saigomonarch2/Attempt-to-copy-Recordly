@@ -1,0 +1,38 @@
+name: Unzip Archive
+
+on:
+  workflow_dispatch: # इसे मैन्युअली चलाने के लिए
+
+permissions:
+  contents: write # यह ज़रूरी है ताकि Action आपकी रिपॉजिटरी में बदलाव कर सके
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code with LFS
+        uses: actions/checkout@v4
+        with:
+          lfs: true # यह लाइन LFS से असली 800MB फ़ाइल डाउनलोड करेगी
+
+      - name: Unzip and prepare files
+        run: |
+          # ज़िप को temp_extracted फोल्डर में खोलें
+          unzip RecStudio.zip -d temp_extracted
+          
+          # ज़िप को Git से हटा दें
+          git rm RecStudio.zip
+          
+          # extracted फ़ाइलों को मुख्य फोल्डर में कॉपी करें (छिपी फ़ाइलों सहित)
+          cp -r temp_extracted/. .
+          
+          # temp फोल्डर हटा दें
+          rm -rf temp_extracted
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Auto-unzip RecStudio.zip and remove the archive" || echo "No changes to commit"
+          git push
